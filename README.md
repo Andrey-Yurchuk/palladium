@@ -28,7 +28,7 @@ mysql -u root -p < palladium_db.sql
 ```
 Вы также можете импортировать дамп базы данных при помощи PhpMyAdmin, Dbeaver или др. 
 
-### 3. Настройте подключение к базе данных в src/Config/DatabaseConfig.php: 
+### 3. Настройте подключение к базе данных в src/App/Config/DatabaseConfig.php: 
 
 ```bash
 ...
