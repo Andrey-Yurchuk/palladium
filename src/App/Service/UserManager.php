@@ -30,11 +30,7 @@ class UserManager
             throw new RuntimeException($e->getMessage());
         }
 
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM users WHERE email = :email");
-        $stmt->execute([':email' => $validatedEmail]);
-        if ($stmt->fetchColumn() > 0) {
-            throw new RuntimeException('Пользователь с таким email уже существует');
-        }
+        $this->checkEmailUnique($validatedEmail);
 
         $now = date('Y-m-d H:i:s');
 
@@ -89,11 +85,7 @@ class UserManager
             try {
                 $validatedEmail = Validator::validateEmail($email);
                 if ($validatedEmail !== $user['email']) {
-                    $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM users WHERE email = :email AND id != :id");
-                    $stmt->execute([':email' => $validatedEmail, ':id' => $id]);
-                    if ($stmt->fetchColumn() > 0) {
-                        throw new RuntimeException('Пользователь с таким email уже существует');
-                    }
+                    $this->checkEmailUnique($validatedEmail, $id);
                 }
                 $params[':email'] = $validatedEmail;
                 $fields[] = "email = :email";
@@ -210,5 +202,23 @@ class UserManager
         $stmt->execute([':user_id' => $userId]);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    private function checkEmailUnique(string $email, ?int $excludeUserId = null): void
+    {
+        $sql = "SELECT COUNT(*) FROM users WHERE email = :email";
+        $params = [':email' => $email];
+
+        if ($excludeUserId !== null) {
+            $sql .= " AND id != :id";
+            $params[':id'] = $excludeUserId;
+        }
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        if ($stmt->fetchColumn() > 0) {
+            throw new RuntimeException('Пользователь с таким email уже существует');
+        }
     }
 }
